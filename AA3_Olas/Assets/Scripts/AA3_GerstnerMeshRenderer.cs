@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,27 +7,35 @@ using UnityEngine;
 public class AA3_GerstnerMeshRenderer : MonoBehaviour
 {
     MeshFilter mf;
+
+    [Header("Dimensiones de la malla")]
     public float width = 5f;   // ancho de la malla
     public float height = 5f;  // largo de la malla
-    public int xSize = 10;     // subdivisiones en X (mínimo 2)
-    public int ySize = 10;     // subdivisiones en Z (mínimo 2)
+    [Min(2)] public int xSize = 10;     // subdivisiones en X (mínimo 2)
+    [Min(2)] public int ySize = 10;     // subdivisiones en Z (mínimo 2)
 
-    public Mesh mesh;
-    public AA3_GerstnerWaves waves;
+    [Header("Referencias")]
+    public AA3_GerstnerWaves waves;     // Lógica de las olas Gerstner
+    public Transform buoyRender;        // GameObject que renderiza la boya (por ejemplo, una esfera)
+
+    private Mesh mesh;
 
     private void Start()
     {
         mf = GetComponent<MeshFilter>();
-        mesh = Create();
+        mesh = Create();                 // Crear la malla plana subdividida
         mf.sharedMesh = mesh;
     }
 
     private void Update()
     {
-        // Actualizar la simulación de olas
+        if (waves == null)
+            return;
+
+        // 1) Actualizar la simulación de olas Gerstner
         waves.Update(Time.deltaTime);
 
-        // Extraer los vértices deformados y asignarlos a la malla
+        // 2) Reemplazar los vértices del mesh con las posiciones deformadas (X, Y, Z)
         Vector3[] vertices = new Vector3[waves.points.Length];
         for (int i = 0; i < waves.points.Length; i++)
         {
@@ -35,30 +44,38 @@ public class AA3_GerstnerMeshRenderer : MonoBehaviour
 
         mesh.SetVertices(vertices);
         mesh.RecalculateNormals();
-        // Si deseas optimizar, puedes usar mesh.UploadMeshData(false);
+
+        // 3) Sincronizar el GameObject de la boya (buoyRender) para que siga la posición calculada
+        if (buoyRender != null)
+        {
+            // waves.buoy.position está en Vector3C, lo convertimos a Vector3 Unity
+            buoyRender.position = waves.buoy.position.ToUnity();
+        }
     }
 
     /// <summary>
-    /// Genera una malla rectangular plana subdividida en xSize × ySize,
-    /// inicializando el array de vértices (originalPosition) para GerstnerWaves.
+    /// Genera una malla rectangular subdividida en xSize×ySize,
+    /// inicializa waves.points con la posición “en reposo” de cada vértice.
     /// </summary>
     public Mesh Create()
     {
-        Mesh newMesh = new Mesh();
-        newMesh.name = "Gerstner Water Mesh";
+        Mesh newMesh = new Mesh
+        {
+            name = "Gerstner Water Mesh"
+        };
 
-        // Cantidad total de vértices: (xSize + 1) × (ySize + 1)
-        Vector3[] vertices = new Vector3[(xSize + 1) * (ySize + 1)];
-        waves.points = new AA3_GerstnerWaves.Vertex[(xSize + 1) * (ySize + 1)];
+        int totalVerts = (xSize + 1) * (ySize + 1);
+        Vector3[] vertices = new Vector3[totalVerts];
+        waves.points = new AA3_GerstnerWaves.Vertex[totalVerts];
 
-        // Recorrer filas y columnas para colocar vértices
+        // Rellenar el array de vértices / puntos originales
         for (int i = 0, z = 0; z <= ySize; z++)
         {
             for (int x = 0; x <= xSize; x++, i++)
             {
                 float posX = x * width / xSize - width * 0.5f;
                 float posZ = z * height / ySize - height * 0.5f;
-                Vector3 worldPos = new Vector3(posX, 0, posZ);
+                Vector3 worldPos = new Vector3(posX, 0f, posZ);
 
                 vertices[i] = worldPos;
                 waves.points[i] = new AA3_GerstnerWaves.Vertex(worldPos.ToCustom());
@@ -67,7 +84,7 @@ public class AA3_GerstnerMeshRenderer : MonoBehaviour
 
         newMesh.vertices = vertices;
 
-        // Triángulos (dos triángulos por “cuadrado”)
+        // Construir los triángulos (dos por cada cuadrado)
         int[] triangles = new int[xSize * ySize * 6];
         for (int ti = 0, vi = 0, z = 0; z < ySize; z++, vi++)
         {
@@ -86,13 +103,12 @@ public class AA3_GerstnerMeshRenderer : MonoBehaviour
         newMesh.triangles = triangles;
         newMesh.RecalculateNormals();
         newMesh.MarkDynamic();
-
         return newMesh;
     }
 
     private void OnDrawGizmosSelected()
     {
         if (waves != null)
-            waves.Debug();
+            waves.Debug(); // Dibuja gizmos de puntos originales y deformados, y la boya
     }
 }

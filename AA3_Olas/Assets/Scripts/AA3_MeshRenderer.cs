@@ -6,50 +6,79 @@ using UnityEngine;
 public class AA3_MeshRenderer : MonoBehaviour
 {
     MeshFilter mf;
-    [Min(1)]
-    public float width;
-    [Min(1)]
-    public float height;
-    [Min(2)]
-    public int xSize;
-    [Min(2)]
-    public int ySize;
+
+    [Header("Dimensiones de la malla")]
+    [Min(1)] public float width;
+    [Min(1)] public float height;
+    [Min(2)] public int xSize;
+    [Min(2)] public int ySize;
+
+    [Header("Referencias")]
+    public AA3_Waves waves;        // Lógica de olas sinusoidales
+    public Transform buoyRender;   // GameObject que renderiza la boya (por ejemplo, una esfera)
+
     public Mesh mesh;
-    public AA3_Waves waves;
+
     private void Start()
     {
         mf = GetComponent<MeshFilter>();
-        mesh = Create();
+        mesh = Create();            // Crear la malla plana subdividida
         mf.sharedMesh = mesh;
     }
+
     private void Update()
     {
+        if (waves == null)
+            return;
+
+        // 1) Actualizar olas sinusoidales
         waves.Update(Time.deltaTime);
+
+        // 2) Reemplazar vértices con posiciones deformadas (solo en Y)
         Vector3[] vertices = new Vector3[waves.points.Length];
         for (int i = 0; i < waves.points.Length; i++)
         {
             vertices[i] = waves.points[i].position.ToUnity();
         }
+
         mesh.SetVertices(vertices);
         mesh.RecalculateNormals();
-        //mesh.MarkModified();
-        //mesh.UploadMeshData(true);
+
+        // 3) Mover el GameObject que renderiza la boya
+        if (buoyRender != null)
+        {
+            buoyRender.position = waves.buoy.position.ToUnity();
+        }
     }
 
+    /// <summary>
+    /// Genera una malla subdividida en xSize×ySize y
+    /// almacena en waves.points la posición original de cada vértice.
+    /// </summary>
     public Mesh Create()
     {
-        Mesh newmesh = new Mesh();
-        Vector3[] vertices = new Vector3[(xSize + 1) * (ySize + 1)];
-        newmesh.name = "Procedural Grid";
-        waves.points = new AA3_Waves.Vertex[(xSize + 1) * (ySize + 1)];
+        Mesh newmesh = new Mesh
+        {
+            name = "Procedural Sinusoidal Grid"
+        };
+
+        int totalVerts = (xSize + 1) * (ySize + 1);
+        Vector3[] vertices = new Vector3[totalVerts];
+        waves.points = new AA3_Waves.Vertex[totalVerts];
+
         for (int i = 0, y = 0; y <= ySize; y++)
         {
             for (int x = 0; x <= xSize; x++, i++)
             {
-                vertices[i] = new Vector3(x * width / xSize - width * 0.5f, 0, y * height / ySize - height * 0.5f);
-                waves.points[i] = new AA3_Waves.Vertex(vertices[i].ToCustom());
+                float posX = x * width / xSize - width * 0.5f;
+                float posZ = y * height / ySize - height * 0.5f;
+                Vector3 worldPos = new Vector3(posX, 0f, posZ);
+
+                vertices[i] = worldPos;
+                waves.points[i] = new AA3_Waves.Vertex(worldPos.ToCustom());
             }
         }
+
         newmesh.vertices = vertices;
 
         int[] triangles = new int[xSize * ySize * 6];
@@ -57,12 +86,16 @@ public class AA3_MeshRenderer : MonoBehaviour
         {
             for (int x = 0; x < xSize; x++, ti += 6, vi++)
             {
-                triangles[ti] = vi;
-                triangles[ti + 3] = triangles[ti + 2] = vi + 1;
-                triangles[ti + 4] = triangles[ti + 1] = vi + xSize + 1;
+                triangles[ti + 0] = vi;
+                triangles[ti + 1] = vi + xSize + 1;
+                triangles[ti + 2] = vi + 1;
+
+                triangles[ti + 3] = vi + 1;
+                triangles[ti + 4] = vi + xSize + 1;
                 triangles[ti + 5] = vi + xSize + 2;
             }
         }
+
         newmesh.triangles = triangles;
         newmesh.RecalculateNormals();
         newmesh.MarkDynamic();
@@ -71,6 +104,7 @@ public class AA3_MeshRenderer : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-        waves.Debug();
+        if (waves != null)
+            waves.Debug(); // Dibuja gizmos de los vértices y la boya
     }
 }

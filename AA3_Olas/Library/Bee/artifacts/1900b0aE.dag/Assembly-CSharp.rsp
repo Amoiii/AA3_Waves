@@ -356,6 +356,13 @@
 "Assets/Scripts/AA3_GerstnerWaves.cs"
 "Assets/Scripts/AA3_MeshRenderer.cs"
 "Assets/Scripts/AA3_Waves.cs"
+"Assets/Scripts/Common/CapsuleC.cs"
+"Assets/Scripts/Common/CubeC.cs"
+"Assets/Scripts/Common/CustomDebug.cs"
+"Assets/Scripts/Common/IAddableVector3.cs"
+"Assets/Scripts/Common/LineC.cs"
+"Assets/Scripts/Common/PlaneC.cs"
+"Assets/Scripts/Common/SphereC.cs"
 "Assets/Scripts/Common/UnityToCustom.cs"
 "Assets/Scripts/Common/Vector3C.cs"
 -langversion:9.0

@@ -53,19 +53,7 @@ public struct CubeC
         }
         return false;
     }
-    /*
-    public Vector3C NearestPoint(Vector3C position, CubeC cube) // Revisar
-    {
 
-        return;
-    }
-    */
-    /*
-    public Vector3C IntersectionWithLine() // Revisar
-    {
-        return;
-    }
-    */
     public override bool Equals(object obj)
     {
         if (obj is CubeC)

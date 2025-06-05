@@ -15,14 +15,14 @@ public class AA3_MeshRenderer : MonoBehaviour
 
     [Header("Referencias")]
     public AA3_Waves waves;        // Lógica de olas sinusoidales
-    public Transform buoyRender;   // GameObject que renderiza la boya (por ejemplo, una esfera)
+    public Transform buoyRender;   
 
     public Mesh mesh;
 
     private void Start()
     {
         mf = GetComponent<MeshFilter>();
-        mesh = Create();            // Crear la malla plana subdividida
+        mesh = Create();            // Crear la malla subdividida
         mf.sharedMesh = mesh;
     }
 
@@ -44,17 +44,14 @@ public class AA3_MeshRenderer : MonoBehaviour
         mesh.SetVertices(vertices);
         mesh.RecalculateNormals();
 
-        // 3) Mover el GameObject que renderiza la boya
+        
         if (buoyRender != null)
         {
             buoyRender.position = waves.buoy.position.ToUnity();
         }
     }
 
-    /// <summary>
-    /// Genera una malla subdividida en xSize×ySize y
-    /// almacena en waves.points la posición original de cada vértice.
-    /// </summary>
+ 
     public Mesh Create()
     {
         Mesh newmesh = new Mesh
@@ -105,6 +102,6 @@ public class AA3_MeshRenderer : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         if (waves != null)
-            waves.Debug(); // Dibuja gizmos de los vértices y la boya
+            waves.Debug();
     }
 }

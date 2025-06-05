@@ -32,14 +32,14 @@ public class AA3_GerstnerWaves
     public BuoySettings buoySettings;
     public SphereC buoy;
 
-    // Array de configuraciones de ondas Gerstner
+    // Array ondas Gerstner
     public GerstnerSettings[] wavesSettings;
 
     // Cada vértice de la malla:
     public struct Vertex
     {
-        public Vector3C originalPosition; // posición original en “reposo”
-        public Vector3C position;         // posición deformada en el frame actual
+        public Vector3C originalPosition; // posición original
+        public Vector3C position;         // posición deformada
 
         public Vertex(Vector3C _pos)
         {
@@ -52,15 +52,12 @@ public class AA3_GerstnerWaves
     public float elapsedTime;
     private float buoyVelocity = 0.0f;
 
-    /// <summary>
-    /// Debe llamarse desde Update(float dt) en el renderer. 
-    /// Actualiza elapsedTime, deforma todos los vértices según Gerstner y actualiza la boya.
-    /// </summary>
+  
     public void Update(float dt)
     {
         elapsedTime += dt;
 
-        // Recorremos cada punto de la malla
+        // Recorremos la malla
         for (int i = 0; i < points.Length; i++)
         {
             Vector3C p0 = points[i].originalPosition; // (x0, y0=0, z0)
@@ -97,14 +94,10 @@ public class AA3_GerstnerWaves
             points[i].position = newPos;
         }
 
-        // Actualizar la posición de la boya según altura de ola
+        
         BuoyPosition(dt);
     }
 
-    /// <summary>
-    /// Calcula la posición vertical de la boya según la altitud de la ola Gerstner en (x, z)
-    /// y aplica la fuerza de flotación.
-    /// </summary>
     private void BuoyPosition(float dt)
     {
         float waveHeight = GetWaveHeight(buoy.position.x, buoy.position.z);
@@ -113,7 +106,7 @@ public class AA3_GerstnerWaves
         float submergedDepth = Math.Max(0, waveHeight - buoy.position.y);
         submergedDepth = Math.Min(submergedDepth, buoySettings.radius);
 
-        // Volumen de la parte sumergida de la esfera: (π * d^2 * (3R - d)) / 3
+        //(π * d^2 * (3R - d)) / 3
         float R = buoySettings.radius;
         float d = submergedDepth;
         float submergedVolume = (float)((Math.PI * d * d) * (3 * R - d) / 3.0);
@@ -129,10 +122,7 @@ public class AA3_GerstnerWaves
         buoy.position.y += buoyVelocity * dt;
     }
 
-    /// <summary>
-    /// Solo calcula la altura Y de la ola (sin deformar X/Z), para saber dónde flota la boya.
-    /// Utiliza la parte sin(θ) de Gerstner (superposición).
-    /// </summary>
+
     public float GetWaveHeight(float x, float z)
     {
         float y = 0f;
@@ -146,9 +136,6 @@ public class AA3_GerstnerWaves
         return y;
     }
 
-    /// <summary>
-    /// Dibuja en Gizmos la posición original y actual de cada vértice, y la boya.
-    /// </summary>
     public void Debug()
     {
         if (points != null)
